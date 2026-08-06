@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brand Options — Seating Chart</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --font: 'Inter', system-ui, -apple-system, sans-serif; }
+  body {
+    font-family: var(--font);
+    background: #f5f5f3;
+    color: #333;
+    padding: 48px 32px;
+    min-height: 100vh;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #222;
+  }
+  .subtitle {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 48px;
+  }
+  .brands {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    max-width: 1100px;
+  }
+  .brand-card {
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  }
+  .brand-header {
+    padding: 24px 24px 20px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .brand-name {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .brand-desc {
+    font-size: 12px;
+    color: #999;
+  }
+  .brand-body { padding: 20px 24px 28px; }
+
+  /* Color swatches */
+  .swatches {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .swatch {
+    flex: 1;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .swatch-color {
+    height: 48px;
+  }
+  .swatch-label {
+    font-size: 10px;
+    color: #888;
+    padding: 5px 6px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .swatch-hex {
+    font-size: 11px;
+    color: #555;
+    font-weight: 600;
+    padding: 1px 6px 5px;
+  }
+
+  /* Section label */
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #bbb;
+    margin: 20px 0 10px;
+  }
+
+  /* Mini toolbar preview */
+  .toolbar-preview {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 6px 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    width: fit-content;
+    margin-bottom: 16px;
+  }
+  .tb-seats {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+  }
+  .tb-btn {
+    width: 22px; height: 22px;
+    border-radius: 5px;
+    border: 1px solid #e0e0e0;
+    background: #f8f8f8;
+    font-size: 14px;
+    font-weight: 300;
+    display: flex; align-items: center; justify-content: center;
+    cursor: default;
+  }
+  .tb-val { font-weight: 700; font-size: 13px; min-width: 18px; text-align: center; }
+  .tb-label { color: #aaa; font-size: 11px; }
+  .tb-sep { width: 1px; height: 18px; background: #e8e8e8; }
+  .tb-heads {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 12px; color: #888;
+  }
+  .tb-delete { font-size: 12px; color: #c00; cursor: default; background: transparent; border: none; }
+
+  /* Seat circles preview */
+  .seats-preview {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .seat-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .seat-empty {
+    background: #e8e8e8;
+    border-color: #bbb;
+  }
+  .seat-label { font-size: 11px; color: #999; }
+
+  /* Canvas mini preview */
+  .canvas-preview {
+    background: #f7f7f7;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  canvas.mini { display: block; }
+
+  /* Checkbox */
+  .cb-wrap {
+    display: flex; align-items: center; gap: 6px; font-size: 12px; color: #888;
+    margin-bottom: 4px;
+  }
+  input[type=checkbox] { accent-color: var(--accent); width: 13px; height: 13px; }
+
+  /* Badge */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  /* Button samples */
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .btn-sample {
+    padding: 5px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: var(--font);
+    cursor: default;
+    border: 1px solid;
+  }
+  .btn-primary { color: #fff; border-color: transparent; }
+  .btn-ghost   { background: transparent; }
+
+  /* Nav bar sample */
+  .nav-sample {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 2px solid;
+    margin-bottom: 0;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* Font comparison cards */
+  .font-card .brand-body { font-family: var(--font-sample); }
+  .font-heading {
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    color: #222;
+  }
+  .font-ui {
+    font-size: 13px;
+    color: #777;
+    margin-bottom: 18px;
+  }
+  .font-seats { display: flex; gap: 8px; }
+  .font-card .seat-circle { font-family: var(--font-sample); }
+
+  /* Focus ring sample */
+  .focus-sample {
+    border: 1px solid #d0d0d0;
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-family: var(--font);
+    outline: none;
+    width: 100%;
+    background: #fff;
+    margin-bottom: 12px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Brand Directions</h1>
+<p class="subtitle">Three accent color options. Double-click the table name on canvas to rename; group indicator and seats shown per brand.</p>
+
+<div class="brands">
+
+  <!-- ── Brand A: Blush Terracotta ── -->
+  <div class="brand-card" style="--accent: #C97B63;">
+    <div class="brand-header">
+      <div class="brand-name">A — Blush Terracotta</div>
+      <div class="brand-desc">Warm, romantic, wedding-forward</div>
+    </div>
+    <div class="brand-body">
+      <div class="swatches">
+        <div class="swatch">
+          <div class="swatch-color" style="background:#C97B63;"></div>
+          <div class="swatch-label">Accent</div>
+          <div class="swatch-hex">#C97B63</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#F3EDE8;"></div>
+          <div class="swatch-label">Tint</div>
+          <div class="swatch-hex">#F3EDE8</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#8B4E38;"></div>
+          <div class="swatch-label">Dark</div>
+          <div class="swatch-hex">#8B4E38</div>
+        </div>
+      </div>
+
+      <div class="section-label">Buttons</div>
+      <div class="btn-row">
+        <button class="btn-sample btn-primary" style="background:#C97B63;">Save Version</button>
+        <button class="btn-sample btn-ghost" style="color:#C97B63; border-color:#C97B63;">Ungroup</button>
+      </div>
+
+      <div class="section-label">Table Name Input</div>
+      <input class="focus-sample" value="Table Name" style="box-shadow: inset 0 0 0 2px #C97B63;" readonly />
+
+      <div class="section-label">Toolbar Preview</div>
+      <div class="toolbar-preview">
+        <div class="tb-seats">
+          <div class="tb-btn">−</div>
+          <div class="tb-val">8</div>
+          <div class="tb-btn">+</div>
+          <div class="tb-label">seats</div>
+        </div>
+        <div class="tb-sep"></div>
+        <div class="tb-heads">
+          <input type="checkbox" style="accent-color:#C97B63;" checked readonly /> Heads
+        </div>
+        <div class="tb-sep"></div>
+        <button class="tb-delete">Delete</button>
+      </div>
+
+      <div class="section-label">Seats</div>
+      <div class="seats-preview">
+        <div class="seat-circle" style="background:#C97B63; border-color:#A8624D;">AB</div>
+        <div class="seat-circle" style="background:#C97B63; border-color:#A8624D;">CD</div>
+        <div class="seat-circle seat-empty"></div>
+        <div class="seat-circle seat-empty"></div>
+        <div class="seat-label">filled / empty</div>
+      </div>
+
+      <div class="section-label">Canvas Preview</div>
+      <div class="canvas-preview">
+        <canvas class="mini" id="canvasA" width="220" height="120"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Brand B: Sage & Stone ── -->
+  <div class="brand-card" style="--accent: #7D9B76;">
+    <div class="brand-header">
+      <div class="brand-name">B — Sage &amp; Stone</div>
+      <div class="brand-desc">Natural, earthy, garden-party feel</div>
+    </div>
+    <div class="brand-body">
+      <div class="swatches">
+        <div class="swatch">
+          <div class="swatch-color" style="background:#7D9B76;"></div>
+          <div class="swatch-label">Accent</div>
+          <div class="swatch-hex">#7D9B76</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#EBF0EA;"></div>
+          <div class="swatch-label">Tint</div>
+          <div class="swatch-hex">#EBF0EA</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#4E6B49;"></div>
+          <div class="swatch-label">Dark</div>
+          <div class="swatch-hex">#4E6B49</div>
+        </div>
+      </div>
+
+      <div class="section-label">Buttons</div>
+      <div class="btn-row">
+        <button class="btn-sample btn-primary" style="background:#7D9B76;">Save Version</button>
+        <button class="btn-sample btn-ghost" style="color:#7D9B76; border-color:#7D9B76;">Ungroup</button>
+      </div>
+
+      <div class="section-label">Table Name Input</div>
+      <input class="focus-sample" value="Table Name" style="box-shadow: inset 0 0 0 2px #7D9B76;" readonly />
+
+      <div class="section-label">Toolbar Preview</div>
+      <div class="toolbar-preview">
+        <div class="tb-seats">
+          <div class="tb-btn">−</div>
+          <div class="tb-val">8</div>
+          <div class="tb-btn">+</div>
+          <div class="tb-label">seats</div>
+        </div>
+        <div class="tb-sep"></div>
+        <div class="tb-heads">
+          <input type="checkbox" style="accent-color:#7D9B76;" checked readonly /> Heads
+        </div>
+        <div class="tb-sep"></div>
+        <button class="tb-delete">Delete</button>
+      </div>
+
+      <div class="section-label">Seats</div>
+      <div class="seats-preview">
+        <div class="seat-circle" style="background:#7D9B76; border-color:#5E7B57;">AB</div>
+        <div class="seat-circle" style="background:#7D9B76; border-color:#5E7B57;">CD</div>
+        <div class="seat-circle seat-empty"></div>
+        <div class="seat-circle seat-empty"></div>
+        <div class="seat-label">filled / empty</div>
+      </div>
+
+      <div class="section-label">Canvas Preview</div>
+      <div class="canvas-preview">
+        <canvas class="mini" id="canvasB" width="220" height="120"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Brand C: Slate Blue ── -->
+  <div class="brand-card" style="--accent: #4A6FA5;">
+    <div class="brand-header">
+      <div class="brand-name">C — Slate Blue</div>
+      <div class="brand-desc">Sophisticated, clean, classic</div>
+    </div>
+    <div class="brand-body">
+      <div class="swatches">
+        <div class="swatch">
+          <div class="swatch-color" style="background:#4A6FA5;"></div>
+          <div class="swatch-label">Accent</div>
+          <div class="swatch-hex">#4A6FA5</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#E8EDF5;"></div>
+          <div class="swatch-label">Tint</div>
+          <div class="swatch-hex">#E8EDF5</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#2D4A73;"></div>
+          <div class="swatch-label">Dark</div>
+          <div class="swatch-hex">#2D4A73</div>
+        </div>
+      </div>
+
+      <div class="section-label">Buttons</div>
+      <div class="btn-row">
+        <button class="btn-sample btn-primary" style="background:#4A6FA5;">Save Version</button>
+        <button class="btn-sample btn-ghost" style="color:#4A6FA5; border-color:#4A6FA5;">Ungroup</button>
+      </div>
+
+      <div class="section-label">Table Name Input</div>
+      <input class="focus-sample" value="Table Name" style="box-shadow: inset 0 0 0 2px #4A6FA5;" readonly />
+
+      <div class="section-label">Toolbar Preview</div>
+      <div class="toolbar-preview">
+        <div class="tb-seats">
+          <div class="tb-btn">−</div>
+          <div class="tb-val">8</div>
+          <div class="tb-btn">+</div>
+          <div class="tb-label">seats</div>
+        </div>
+        <div class="tb-sep"></div>
+        <div class="tb-heads">
+          <input type="checkbox" style="accent-color:#4A6FA5;" checked readonly /> Heads
+        </div>
+        <div class="tb-sep"></div>
+        <button class="tb-delete">Delete</button>
+      </div>
+
+      <div class="section-label">Seats</div>
+      <div class="seats-preview">
+        <div class="seat-circle" style="background:#4A6FA5; border-color:#2D4A73;">AB</div>
+        <div class="seat-circle" style="background:#4A6FA5; border-color:#2D4A73;">CD</div>
+        <div class="seat-circle seat-empty"></div>
+        <div class="seat-circle seat-empty"></div>
+        <div class="seat-label">filled / empty</div>
+      </div>
+
+      <div class="section-label">Canvas Preview</div>
+      <div class="canvas-preview">
+        <canvas class="mini" id="canvasC" width="220" height="120"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Brand D: Cobalt Blue ── -->
+  <div class="brand-card" style="--accent: #2563EB;">
+    <div class="brand-header">
+      <div class="brand-name">D — Cobalt Blue</div>
+      <div class="brand-desc">Bold, vibrant, modern-formal</div>
+    </div>
+    <div class="brand-body">
+      <div class="swatches">
+        <div class="swatch">
+          <div class="swatch-color" style="background:#2563EB;"></div>
+          <div class="swatch-label">Accent</div>
+          <div class="swatch-hex">#2563EB</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#E8EFFE;"></div>
+          <div class="swatch-label">Tint</div>
+          <div class="swatch-hex">#E8EFFE</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#1D4ED8;"></div>
+          <div class="swatch-label">Dark</div>
+          <div class="swatch-hex">#1D4ED8</div>
+        </div>
+      </div>
+
+      <div class="section-label">Buttons</div>
+      <div class="btn-row">
+        <button class="btn-sample btn-primary" style="background:#2563EB;">Save Version</button>
+        <button class="btn-sample btn-ghost" style="color:#2563EB; border-color:#2563EB;">Ungroup</button>
+      </div>
+
+      <div class="section-label">Table Name Input</div>
+      <input class="focus-sample" value="Table Name" style="box-shadow: inset 0 0 0 2px #2563EB;" readonly />
+
+      <div class="section-label">Toolbar Preview</div>
+      <div class="toolbar-preview">
+        <div class="tb-seats">
+          <div class="tb-btn">−</div>
+          <div class="tb-val">8</div>
+          <div class="tb-btn">+</div>
+          <div class="tb-label">seats</div>
+        </div>
+        <div class="tb-sep"></div>
+        <div class="tb-heads">
+          <input type="checkbox" style="accent-color:#2563EB;" checked readonly /> Heads
+        </div>
+        <div class="tb-sep"></div>
+        <button class="tb-delete">Delete</button>
+      </div>
+
+      <div class="section-label">Seats</div>
+      <div class="seats-preview">
+        <div class="seat-circle" style="background:#2563EB; border-color:#1D4ED8;">AB</div>
+        <div class="seat-circle" style="background:#2563EB; border-color:#1D4ED8;">CD</div>
+        <div class="seat-circle seat-empty"></div>
+        <div class="seat-circle seat-empty"></div>
+        <div class="seat-label">filled / empty</div>
+      </div>
+
+      <div class="section-label">Canvas Preview</div>
+      <div class="canvas-preview">
+        <canvas class="mini" id="canvasD" width="220" height="120"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<h1 style="margin-top:56px;">Font Directions</h1>
+<p class="subtitle">All system-installed sans serifs — no CDN, matches the app's no-build-step approach. Rendered with your Mac's actual font files.</p>
+
+<div class="brands fonts">
+
+  <div class="brand-card font-card" style="--font-sample: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <div class="brand-header">
+      <div class="brand-name">System Default (SF)</div>
+      <div class="brand-desc">Native, familiar, disappears into the OS</div>
+    </div>
+    <div class="brand-body">
+      <div class="font-heading">Emma &amp; James</div>
+      <div class="font-ui">8 seats · Table 12 · Heads ✓</div>
+      <div class="font-seats">
+        <div class="seat-circle" style="background:#4A6FA5; border-color:#2D4A73;">AB</div>
+        <div class="seat-circle" style="background:#4A6FA5; border-color:#2D4A73;">12</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="brand-card font-card" style="--font-sample: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+    <div class="brand-header">
+      <div class="brand-name">Helvetica Neue</div>
+      <div class="brand-desc">Classic, neutral, timeless print feel</div>
+    </div>
+    <div class="brand-body">
+      <div class="font-heading">Emma &amp; James</div>
+      <div class="font-ui">8 seats · Table 12 · Heads ✓</div>
+      <div class="font-seats">
+        <div class="seat-circle" style="background:#4A6FA5; border-color:#2D4A73;">AB</div>
+        <div class="seat-circle" style="background:#4A6FA5; border-color:#2D4A73;">12</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="brand-card font-card" style="--font-sample: 'Avenir Next', Avenir, 'Century Gothic', sans-serif;">
+    <div class="brand-header">
+      <div class="brand-name">Avenir Next</div>
+      <div class="brand-desc">Warm, rounded, humanist — a common invitation font</div>
+    </div>
+    <div class="brand-body">
+      <div class="font-heading">Emma &amp; James</div>
+      <div class="font-ui">8 seats · Table 12 · Heads ✓</div>
+      <div class="font-seats">
+        <div class="seat-circle" style="background:#4A6FA5; border-color:#2D4A73;">AB</div>
+        <div class="seat-circle" style="background:#4A6FA5; border-color:#2D4A73;">12</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="brand-card font-card" style="--font-sample: Futura, 'Century Gothic', 'Trebuchet MS', sans-serif;">
+    <div class="brand-header">
+      <div class="brand-name">Futura</div>
+      <div class="brand-desc">Geometric, editorial, confident</div>
+    </div>
+    <div class="brand-body">
+      <div class="font-heading">Emma &amp; James</div>
+      <div class="font-ui">8 seats · Table 12 · Heads ✓</div>
+      <div class="font-seats">
+        <div class="seat-circle" style="background:#4A6FA5; border-color:#2D4A73;">AB</div>
+        <div class="seat-circle" style="background:#4A6FA5; border-color:#2D4A73;">12</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="brand-card font-card" style="--font-sample: Optima, Candara, Calibri, sans-serif;">
+    <div class="brand-header">
+      <div class="brand-name">Optima</div>
+      <div class="brand-desc">Elegant semi-serif feel — a wedding-stationery classic</div>
+    </div>
+    <div class="brand-body">
+      <div class="font-heading">Emma &amp; James</div>
+      <div class="font-ui">8 seats · Table 12 · Heads ✓</div>
+      <div class="font-seats">
+        <div class="seat-circle" style="background:#4A6FA5; border-color:#2D4A73;">AB</div>
+        <div class="seat-circle" style="background:#4A6FA5; border-color:#2D4A73;">12</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const GROUP_LINE_COLOR = '#999999'; // kept off the accent — grouping is structural, not interactive
+
+const BRANDS = [
+  { id: 'A', accent: '#C97B63', accentDark: '#A8624D' },
+  { id: 'B', accent: '#7D9B76', accentDark: '#5E7B57' },
+  { id: 'C', accent: '#4A6FA5', accentDark: '#2D4A73' },
+  { id: 'D', accent: '#2563EB', accentDark: '#1D4ED8' },
+];
+
+function drawMini(canvasEl, brand) {
+  const ctx = canvasEl.getContext('2d');
+  const W = canvasEl.width, H = canvasEl.height;
+
+  ctx.fillStyle = '#f7f7f7';
+  ctx.fillRect(0, 0, W, H);
+
+  // Dot grid
+  ctx.fillStyle = '#cecece';
+  for (let x = 20; x < W; x += 20)
+    for (let y = 20; y < H; y += 20) {
+      ctx.beginPath(); ctx.arc(x, y, 1.2, 0, Math.PI * 2); ctx.fill();
+    }
+
+  // Group highlight
+  const gx = 30, gy = 28, gw = 160, gh = 64;
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(gx - 2, gy - 2, gw + 4, gh + 4, 6);
+  ctx.strokeStyle = GROUP_LINE_COLOR;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+
+  // Left table
+  drawRect(ctx, 30, 28, 72, 64, false, brand);
+  // Right table
+  drawRect(ctx, 102, 28, 72, 64, true, brand);
+
+  // Seats for left table
+  for (let i = 0; i < 3; i++) {
+    const sx = 30 + 12 + i * 24;
+    drawSeat(ctx, sx, 19, false, brand);
+    drawSeat(ctx, sx, 73, i === 0, brand);
+  }
+  // Seats for right table
+  for (let i = 0; i < 3; i++) {
+    const sx = 102 + 12 + i * 24;
+    drawSeat(ctx, sx, 19, false, brand);
+    drawSeat(ctx, sx, 73, i === 1, brand);
+  }
+  // Head seats
+  drawSeat(ctx, 21, 46, false, brand);  // left head
+  drawSeat(ctx, 183, 46, true, brand);  // right head
+}
+
+function drawRect(ctx, x, y, w, h, selected, brand) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, 5);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.strokeStyle = selected ? brand.accent : '#ccc';
+  ctx.lineWidth = selected ? 1.5 : 1;
+  ctx.stroke();
+}
+
+function drawSeat(ctx, cx, cy, filled, brand) {
+  ctx.beginPath();
+  ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+  ctx.fillStyle = filled ? brand.accent : '#e8e8e8';
+  ctx.fill();
+  ctx.strokeStyle = filled ? brand.accentDark : '#bbb';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+BRANDS.forEach(b => {
+  const canvas = document.getElementById('canvas' + b.id);
+  if (canvas) drawMini(canvas, b);
+});
+</script>
+</body>
+</html>

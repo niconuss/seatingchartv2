@@ -1,0 +1,951 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --panel-width: 280px;
+  --panel-inset: 16px;
+  --panel-offset: calc(var(--panel-inset) + var(--panel-width)); /* total width the floating panel occupies from the left edge */
+  --color-bg: #f0f0f0;
+  --color-canvas-bg: #f7f7f7;
+  --color-panel-bg: #ffffff;
+  --color-border: #e0e0e0;
+  --color-accent: #2563EB;
+  --color-text: #333;
+  --color-text-muted: #888;
+  --color-btn: #f5f5f5;
+  --color-btn-hover: #e8e8e8;
+  --radius: 6px;
+  --font: 'Avenir Next', Avenir, 'Century Gothic', sans-serif;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font);
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+/* ── Main layout ── */
+#main {
+  position: relative;
+  height: 100vh;
+}
+
+/* ── Side panel (floats over the canvas) ── */
+#side-panel {
+  position: absolute;
+  top: var(--panel-inset);
+  left: var(--panel-inset);
+  bottom: var(--panel-inset);
+  width: var(--panel-width);
+  z-index: 20;
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  overflow: hidden;
+}
+
+/* ── Panel sections ── */
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.panel-section-scroll {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Small caps gray label used to head up a panel section — part of the design system, see design-system.html */
+.section-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #bbb;
+  flex-shrink: 0;
+}
+
+#chart-title {
+  font-size: 16px;
+  font-weight: 700;
+  outline: none;
+  border-radius: 4px;
+  padding: 2px 4px;
+  cursor: text;
+}
+#chart-title:focus {
+  background: #f5f5f5;
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+.section-label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-label-row > *:first-child {
+  margin-right: auto;
+}
+
+/* Body-style heading used where the Guests section label used to be */
+.guest-stat-heading {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.icon-btn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 15px;
+  line-height: 1;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+.icon-btn:hover {
+  background: var(--color-btn-hover);
+  color: var(--color-accent);
+}
+
+#version-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.version-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  min-height: 42px; /* fits the two-line name + updated-at, and reserves room for the 20px hover icons */
+  border-radius: var(--radius);
+  font-size: 13px;
+}
+.version-item:not(.active):hover {
+  background: #f5f5f5;
+}
+.version-item.active {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.version-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.version-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  color: var(--color-text);
+}
+.version-item.active .version-name {
+  font-weight: 600;
+}
+
+.version-updated {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.version-name-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-family: var(--font);
+  border: 1px solid var(--color-accent);
+  border-radius: 4px;
+  padding: 2px 5px;
+  outline: none;
+}
+
+.version-duplicate-btn,
+.version-delete-btn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+.version-item:hover .version-duplicate-btn,
+.version-item:hover .version-delete-btn {
+  display: flex;
+}
+.version-duplicate-btn:hover {
+  background: var(--color-btn-hover);
+  color: var(--color-accent);
+}
+.version-delete-btn:hover {
+  background: #fff0f0;
+  color: #c00;
+}
+
+#panel-divider {
+  height: 1px;
+  background: var(--color-border);
+  flex-shrink: 0;
+}
+
+#guest-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  flex-shrink: 0;
+}
+#guest-actions button {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  padding: 5px 6px;
+}
+#btn-download-template {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+/* Takes over the "x/x guests seated" line's spot when search is active — sized to
+   fill exactly the space vacated by that hidden text, not just tacked on beside it. */
+#guest-search-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#guest-search-wrap.hidden {
+  display: none;
+}
+#guest-search-wrap input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  font-size: 13px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  outline: none;
+}
+#guest-search-wrap input:focus {
+  border-color: var(--color-accent);
+}
+#stat-seated.hidden,
+#btn-toggle-search.hidden,
+#btn-add-guest.hidden {
+  display: none;
+}
+
+/* Same treatment as a group header (icon, all-caps, same sizing) but blue and with
+   a plus instead of a caret, since it's an action rather than a collapsible group. */
+#btn-add-group {
+  width: 100%;
+  border: none;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  color: var(--color-accent);
+}
+#btn-add-group:hover {
+  opacity: 0.75;
+}
+
+#guest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  overflow-y: auto;
+  transition: box-shadow 0.1s;
+}
+/* "Scroll shadow" — only present on whichever edge still has more list scrolled
+   behind it, toggled in JS off the list's scroll position (see _updateScrollShadows). */
+#guest-list.shadow-top {
+  box-shadow: inset 0 6px 6px -6px rgba(0, 0, 0, 0.18);
+}
+#guest-list.shadow-bottom {
+  box-shadow: inset 0 -6px 6px -6px rgba(0, 0, 0, 0.18);
+}
+#guest-list.shadow-top.shadow-bottom {
+  box-shadow: inset 0 6px 6px -6px rgba(0, 0, 0, 0.18), inset 0 -6px 6px -6px rgba(0, 0, 0, 0.18);
+}
+
+.guest-group-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border-radius: var(--radius);
+}
+#guest-list > .guest-group-section:first-child .guest-group-label {
+  padding-top: 2px;
+}
+.guest-group-section.drag-over {
+  background: rgba(37, 99, 235, 0.06);
+}
+.guest-group-section.drag-over .guest-group-label {
+  color: var(--color-accent);
+}
+
+/* Shows exactly where a dragged group will land — snaps above/below whichever
+   group section the cursor is currently over. */
+.group-reorder-indicator {
+  height: 2px;
+  margin: 3px 8px;
+  background: var(--color-accent);
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+.guest-group-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #bbb;
+  padding: 10px 8px 2px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.guest-group-name-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font);
+  border: 1px solid var(--color-accent);
+  border-radius: 4px;
+  padding: 1px 4px;
+  outline: none;
+}
+
+.group-chevron {
+  flex-shrink: 0;
+  transition: transform 0.15s;
+  transform: rotate(90deg); /* expanded: pointing down */
+}
+.guest-group-label.collapsed .group-chevron {
+  transform: rotate(0deg); /* collapsed: pointing right */
+}
+
+.guest-group-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guest-group-count {
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: #bbb;
+  white-space: nowrap;
+}
+
+.group-delete-btn {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  display: flex;
+  visibility: hidden; /* reserves its space at all times, so hovering never changes row height */
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #bbb;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.guest-group-label:hover .group-delete-btn {
+  visibility: visible;
+}
+.group-delete-btn:hover {
+  background: #fff0f0;
+  color: #c00;
+}
+
+.guest-list-empty {
+  font-size: 12px;
+  color: #aaa;
+  padding: 8px 4px;
+}
+
+.guest-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  min-height: 28px; /* reserves room for the 20px hover delete icon so hovering never grows the row */
+  border-radius: var(--radius);
+  font-size: 13px;
+  cursor: grab;
+  user-select: none;
+  border: 1px solid transparent;
+  transition: background 0.1s;
+}
+.guest-item:hover {
+  background: #f5f5f5;
+  border-color: var(--color-border);
+}
+.guest-item.unseated {
+  color: var(--color-text);
+}
+.guest-item.seated {
+  color: #999;
+}
+.guest-item.seated .guest-name::after {
+  content: ' ✓';
+  color: #999;
+}
+.guest-item.dragging {
+  opacity: 0.4;
+}
+
+.guest-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guest-delete-btn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  display: flex;
+  visibility: hidden; /* reserves its space at all times, so hovering never changes row height */
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+.guest-item:hover .guest-delete-btn {
+  visibility: visible;
+}
+.guest-delete-btn:hover {
+  background: #fff0f0;
+  color: #c00;
+}
+
+/* ── Canvas ── */
+#canvas-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--color-canvas-bg);
+}
+
+#main-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: default;
+}
+
+/* ── Export & Versions controls ── */
+#export-controls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+}
+
+.popover-wrap {
+  position: relative;
+}
+
+#btn-export {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+#btn-export .chevron,
+#btn-versions .chevron {
+  transition: transform 0.15s;
+}
+#btn-export.open .chevron,
+#btn-versions.open .chevron {
+  transform: rotate(180deg);
+}
+
+#btn-versions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  max-width: 160px;
+}
+#current-version-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#export-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 220px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+#export-menu.hidden { display: none; }
+#export-menu button {
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 5px;
+  font-size: 13px;
+  color: var(--color-text);
+}
+#export-menu button:hover { background: var(--color-btn-hover); }
+
+#version-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 240px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#version-menu.hidden { display: none; }
+
+/* ── Zoom controls ── */
+#zoom-controls {
+  position: absolute;
+  bottom: 28px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  z-index: 10;
+  overflow: hidden;
+}
+
+#zoom-controls button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#zoom-controls button:hover { background: var(--color-btn-hover); }
+
+#zoom-label {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  padding: 0 6px;
+  min-width: 42px;
+  text-align: center;
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  user-select: none;
+  cursor: text;
+  outline: none;
+  border-radius: 0;
+}
+#zoom-label[contenteditable="true"] {
+  background: #fff;
+  color: var(--color-text);
+  user-select: text;
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+/* ── Table buttons ── */
+#table-buttons {
+  position: absolute;
+  bottom: 28px;
+  /* Centered within the visible canvas area to the right of the floating panel, not the whole window */
+  left: calc(50% + (var(--panel-offset) / 2));
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+  z-index: 10;
+}
+
+.table-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 10px 0;
+  width: 80px;
+  cursor: grab;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: transform 0.15s, box-shadow 0.15s;
+  user-select: none;
+}
+.table-btn:hover {
+  background: #fff;
+  transform: scale(1.06);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.14);
+}
+.table-btn-icon {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+.table-btn-icon svg {
+  position: absolute;
+  inset: 0;
+  width: 40px;
+  height: 40px;
+  overflow: visible; /* svg clips to its viewBox by default — seats sliding outward on hover need this */
+  transition: opacity 0.15s;
+}
+.table-btn-icon .icon-hover { opacity: 0; }
+.table-btn:hover .icon-base  { opacity: 0; }
+.table-btn:hover .icon-hover { opacity: 1; }
+
+/* Seats spread outward from the table on hover, using each seat's own --dx/--dy
+   direction (set inline per-circle in the markup) so it works for any table shape. */
+.table-btn-icon svg circle.seat {
+  transition: transform 0.2s ease;
+  transform: translate(0, 0);
+}
+.table-btn:hover .table-btn-icon svg circle.seat {
+  transform: translate(calc(var(--dx) * 3.5px), calc(var(--dy) * 3.5px));
+}
+/* Rectangle table seats spread out further than the others */
+#btn-add-rect:hover .table-btn-icon svg circle.seat {
+  transform: translate(calc(var(--dx) * 5px), calc(var(--dy) * 5px));
+}
+
+/* The table body itself (always the first shape in the icon) grows slightly on hover too */
+.table-btn-icon svg > circle:first-child,
+.table-btn-icon svg > rect:first-child {
+  transition: transform 0.2s ease;
+  transform-origin: center;
+  transform: scale(1);
+}
+.table-btn:hover .table-btn-icon svg > circle:first-child,
+.table-btn:hover .table-btn-icon svg > rect:first-child {
+  transform: scale(1.12);
+}
+
+/* ── Buttons (shared) ── */
+button {
+  font-family: var(--font);
+  font-size: 13px;
+  padding: 5px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-btn);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+button:hover { background: var(--color-btn-hover); }
+
+button.primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+button.primary:hover { filter: brightness(0.94); }
+
+/* ── Modal ── */
+#modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+#modal-overlay.hidden { display: none; }
+
+#modal-box {
+  background: #fff;
+  border-radius: 10px;
+  padding: 24px;
+  min-width: 320px;
+  max-width: 480px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+
+#modal-content h2 {
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+#modal-content p {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-bottom: 16px;
+}
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.import-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 28px 16px;
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+}
+.import-dropzone:hover,
+.import-dropzone.drag-over {
+  border-color: var(--color-accent);
+  background: rgba(37, 99, 235, 0.04);
+  color: var(--color-accent);
+}
+.import-dropzone-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+.import-dropzone.drag-over .import-dropzone-title {
+  color: var(--color-accent);
+}
+.import-dropzone-sub {
+  font-size: 12px;
+  margin: 0;
+}
+
+.import-sample-link {
+  display: block;
+  margin: 10px 0 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: #999;
+  cursor: pointer;
+}
+.import-sample-link:hover {
+  color: var(--color-accent);
+}
+
+.form-field {
+  margin-bottom: 14px;
+}
+.form-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 5px;
+}
+.form-optional {
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+.form-input {
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-family: var(--font);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  outline: none;
+}
+.form-input:focus {
+  border-color: var(--color-accent);
+}
+.form-input-error {
+  border-color: #c00;
+}
+
+/* ── Table toolbar ── */
+.table-toolbar {
+  position: absolute;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 8px;
+  z-index: 50;
+  white-space: nowrap;
+  pointer-events: all;
+}
+.table-toolbar.hidden { display: none; }
+
+.table-toolbar button {
+  font-size: 13px;
+  padding: 3px 7px;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-text);
+  line-height: 1.3;
+}
+.table-toolbar button:hover { background: var(--color-btn-hover); }
+
+.tt-name {
+  font-size: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 3px 7px;
+  width: 110px;
+  outline: none;
+  font-family: var(--font);
+}
+.tt-name:focus { border-color: var(--color-accent); }
+
+.tt-seats-wrap {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+.tt-seats-wrap button { padding: 2px 6px; font-size: 14px; }
+.tt-seats-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+  min-width: 26px;
+}
+.tt-seats-val {
+  text-align: center;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--color-text);
+}
+.tt-seats-label { font-size: 9px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+.tt-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--color-border);
+  margin: 0 3px;
+  flex-shrink: 0;
+}
+
+.tt-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0 !important;
+  color: var(--color-text-muted) !important;
+}
+.tt-delete:hover { background: #fff0f0 !important; color: #c00 !important; }
+.tt-ungroup { color: var(--color-text-muted) !important; font-size: 12px !important; }
+.tt-heads-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0 4px;
+  user-select: none;
+}
+
+/* ── Stale version banner ── */
+#stale-banner {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: var(--radius);
+  padding: 8px 16px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 200;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+#stale-banner.hidden { display: none; }

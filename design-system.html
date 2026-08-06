@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design System — Seating Chart</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --panel-width: 280px;
+    --color-bg: #f0f0f0;
+    --color-canvas-bg: #f7f7f7;
+    --color-panel-bg: #ffffff;
+    --color-border: #e0e0e0;
+    --color-accent: #2563EB;
+    --color-accent-dark: #1D4ED8;
+    --color-text: #333;
+    --color-text-muted: #888;
+    --color-btn: #f5f5f5;
+    --color-btn-hover: #e8e8e8;
+    --radius: 6px;
+    --font: 'Avenir Next', Avenir, 'Century Gothic', sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: #fafafa;
+    color: var(--color-text);
+    padding: 48px 32px 96px;
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    font-size: 14px;
+    color: var(--color-text-muted);
+    margin-bottom: 48px;
+  }
+
+  h2.doc-heading {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-accent);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+  }
+
+  section.doc-section {
+    margin-bottom: 56px;
+  }
+
+  .doc-desc {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    margin-bottom: 20px;
+    max-width: 640px;
+  }
+
+  code {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 11.5px;
+    background: #f0f0f0;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  /* ── Colors ── */
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px;
+  }
+  .color-card {
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .color-swatch { height: 56px; }
+  .color-meta { padding: 8px 10px; }
+  .color-name { font-size: 12px; font-weight: 600; }
+  .color-hex  { font-size: 11px; color: var(--color-text-muted); font-family: 'SF Mono', Menlo, monospace; }
+  .color-usage { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; }
+
+  /* ── Typography ── */
+  .type-row {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    padding: 14px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .type-sample { flex: 1; }
+  .type-meta { font-size: 11px; color: var(--color-text-muted); font-family: 'SF Mono', Menlo, monospace; white-space: nowrap; }
+
+  .chart-title-sample  { font-size: 16px; font-weight: 700; }
+  .section-label-sample {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #bbb;
+  }
+  .body-sample { font-size: 13px; }
+  .muted-sample { font-size: 12px; color: var(--color-text-muted); }
+  .table-name-sample { font-size: 13px; font-weight: 700; }
+  .guest-label-sample { font-size: 10px; color: #555; }
+
+  /* ── Buttons ── */
+  .demo-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+  .demo-label { font-size: 11px; color: var(--color-text-muted); width: 120px; flex-shrink: 0; }
+
+  button {
+    font-family: var(--font);
+    font-size: 13px;
+    padding: 5px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-btn);
+    color: var(--color-text);
+    cursor: default;
+  }
+  button.primary {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fff;
+  }
+  button.ghost {
+    background: transparent;
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .icon-btn-demo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 10px 0;
+    width: 80px;
+    font-size: 12px;
+    color: var(--color-text-muted);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .icon-btn-demo img { width: 40px; height: 40px; }
+
+  .section-label-row-demo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 260px;
+    padding: 4px 0;
+  }
+  .section-label-row-demo .section-label-sample {
+    margin-right: auto;
+  }
+  .guest-stat-text-demo {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+  .icon-btn {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 15px;
+    line-height: 1;
+    border-radius: 5px;
+  }
+  .icon-btn:hover { background: var(--color-btn-hover); color: var(--color-accent); }
+
+  .dropdown-btn-demo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  }
+  .dropdown-menu-demo {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 220px;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    padding: 4px;
+    margin-top: 6px;
+  }
+  .dropdown-menu-demo button {
+    text-align: left;
+    background: transparent;
+    border: none;
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+
+  /* ── Inputs ── */
+  .input-demo {
+    width: 220px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-family: var(--font);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    outline: none;
+  }
+  .input-demo.focused {
+    border-color: var(--color-accent);
+  }
+  select.input-demo { cursor: default; background: var(--color-btn); }
+
+  /* ── List items (Versions pattern) ── */
+  .version-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    min-height: 32px;
+    border-radius: var(--radius);
+    font-size: 13px;
+  }
+  .version-item:not(.active):hover { background: #f5f5f5; }
+  .version-item.active { background: rgba(37, 99, 235, 0.08); }
+
+  .version-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-text);
+  }
+  .version-item.active .version-name { font-weight: 600; }
+
+  .version-duplicate-btn,
+  .version-delete-btn {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    border-radius: 5px;
+    flex-shrink: 0;
+  }
+  .version-duplicate-btn:hover { background: var(--color-btn-hover); color: var(--color-accent); }
+  .version-delete-btn:hover    { background: #fff0f0; color: #c00; }
+
+  /* ── Grouped list (Guests pattern) ── */
+  .guest-group-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #bbb;
+    padding: 10px 8px 2px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .guest-group-label:first-child { padding-top: 2px; }
+
+  .group-chevron {
+    flex-shrink: 0;
+    transition: transform 0.15s;
+    transform: rotate(90deg);
+  }
+  .guest-group-label.collapsed .group-chevron {
+    transform: rotate(0deg);
+  }
+
+  .guest-group-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .guest-group-count {
+    font-size: 10px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    color: #bbb;
+    white-space: nowrap;
+  }
+
+  .guest-item-demo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: var(--radius);
+    font-size: 13px;
+  }
+  .guest-item-demo:hover { background: #f5f5f5; }
+  .guest-item-demo.seated { color: var(--color-text-muted); }
+  .guest-item-demo.seated .guest-name-demo::after { content: ' \2713'; color: var(--color-accent); }
+
+  /* ── Cards / floating surfaces ── */
+  .surface-demo-wrap {
+    background: var(--color-canvas-bg);
+    border-radius: 10px;
+    padding: 32px;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .surface-panel {
+    width: 160px;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    padding: 14px;
+    font-size: 11px;
+    color: var(--color-text-muted);
+  }
+  .surface-cluster {
+    display: inline-flex;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    padding: 6px 10px;
+    font-size: 11px;
+    color: var(--color-text-muted);
+  }
+  .surface-label { font-size: 11px; color: var(--color-text-muted); margin-top: 8px; }
+
+  /* ── Canvas mini preview ── */
+  .canvas-demo-wrap {
+    background: var(--color-canvas-bg);
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  canvas.mini { display: block; }
+  .canvas-caption { font-size: 11px; color: var(--color-text-muted); text-align: center; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<h1>Design System</h1>
+<p class="subtitle">Living reference for the Seating Chart app's current visual language — Cobalt Blue accent + Avenir Next. Update this page whenever a styling decision changes; see <code>brands.html</code> for the exploratory comparisons this was chosen from.</p>
+
+<!-- ── Colors ── -->
+<section class="doc-section">
+  <h2 class="doc-heading">Colors</h2>
+  <p class="doc-desc">Defined as CSS custom properties in <code>css/style.css</code> <code>:root</code>. A few (seat fill/stroke, group line, dot grid) are drawn on <code>&lt;canvas&gt;</code> and so are hardcoded to matching hex values in <code>js/drawTable.js</code> / <code>js/canvas.js</code> instead.</p>
+  <div class="color-grid">
+    <div class="color-card">
+      <div class="color-swatch" style="background:#2563EB;"></div>
+      <div class="color-meta">
+        <div class="color-name">Accent</div>
+        <div class="color-hex">#2563EB</div>
+        <div class="color-usage">--color-accent · primary buttons, focus rings, selected table stroke, filled seats</div>
+      </div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background:#1D4ED8;"></div>
+      <div class="color-meta">
+        <div class="color-name">Accent Dark</div>
+        <div class="color-hex">#1D4ED8</div>
+        <div class="color-usage">filled-seat border, icon hover-tint outline</div>
+      </div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background:#333;"></div>
+      <div class="color-meta">
+        <div class="color-name">Text</div>
+        <div class="color-hex">#333333</div>
+        <div class="color-usage">--color-text · body text, table names</div>
+      </div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background:#888;"></div>
+      <div class="color-meta">
+        <div class="color-name">Text Muted</div>
+        <div class="color-hex">#888888</div>
+        <div class="color-usage">--color-text-muted · stats, hints, secondary labels</div>
+      </div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background:#bbb;"></div>
+      <div class="color-meta">
+        <div class="color-name">Section Label Gray</div>
+        <div class="color-hex">#bbbbbb</div>
+        <div class="color-usage">.section-label text color only</div>
+      </div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background:#999999;"></div>
+      <div class="color-meta">
+        <div class="color-name">Group Line</div>
+        <div class="color-hex">#999999</div>
+        <div class="color-usage">conjoined-table group outline — deliberately off-accent (structural, not interactive)</div>
+      </div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background:#e0e0e0;"></div>
+      <div class="color-meta">
+        <div class="color-name">Border</div>
+        <div class="color-hex">#e0e0e0</div>
+        <div class="color-usage">--color-border · all card/input borders</div>
+      </div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background:#f5f5f5;"></div>
+      <div class="color-meta">
+        <div class="color-name">Button</div>
+        <div class="color-hex">#f5f5f5</div>
+        <div class="color-usage">--color-btn · default button background</div>
+      </div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background:#e8e8e8;"></div>
+      <div class="color-meta">
+        <div class="color-name">Button Hover</div>
+        <div class="color-hex">#e8e8e8</div>
+        <div class="color-usage">--color-btn-hover · empty seat fill</div>
+      </div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background:#f0f0f0;"></div>
+      <div class="color-meta">
+        <div class="color-name">Page Background</div>
+        <div class="color-hex">#f0f0f0</div>
+        <div class="color-usage">--color-bg</div>
+      </div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background:#f7f7f7;"></div>
+      <div class="color-meta">
+        <div class="color-name">Canvas Background</div>
+        <div class="color-hex">#f7f7f7</div>
+        <div class="color-usage">--color-canvas-bg</div>
+      </div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background:#fff; border-bottom:1px solid #eee;"></div>
+      <div class="color-meta">
+        <div class="color-name">Panel Background</div>
+        <div class="color-hex">#ffffff</div>
+        <div class="color-usage">--color-panel-bg · floating side panel &amp; all floating clusters</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Typography ── -->
+<section class="doc-section">
+  <h2 class="doc-heading">Typography</h2>
+  <p class="doc-desc">Base font stack: <code>'Avenir Next', Avenir, 'Century Gothic', sans-serif</code> (<code>--font</code>) — all system-installed, no CDN. Sizes below are the actual scale in use across the app.</p>
+
+  <div class="type-row">
+    <div class="type-sample"><span class="chart-title-sample">Emma &amp; James</span></div>
+    <div class="type-meta">16px / 700 — chart title</div>
+  </div>
+  <div class="type-row">
+    <div class="type-sample"><span class="section-label-sample">Versions</span></div>
+    <div class="type-meta">10px / 600 / uppercase / 0.08em — .section-label</div>
+  </div>
+  <div class="type-row">
+    <div class="type-sample"><span class="table-name-sample">Table 12</span></div>
+    <div class="type-meta">13px / 700 (canvas) — table name on canvas</div>
+  </div>
+  <div class="type-row">
+    <div class="type-sample"><span class="body-sample">Upload CSV</span></div>
+    <div class="type-meta">13px / 400 — buttons, inputs, body</div>
+  </div>
+  <div class="type-row">
+    <div class="type-sample"><span class="muted-sample">12/128 guests seated</span></div>
+    <div class="type-meta">12px / 400 — stats, hints</div>
+  </div>
+  <div class="type-row">
+    <div class="type-sample"><span class="guest-label-sample">Emma R.</span></div>
+    <div class="type-meta">10px / 400 (canvas) — guest name label next to a filled seat</div>
+  </div>
+</section>
+
+<!-- ── Section Labels ── -->
+<section class="doc-section">
+  <h2 class="doc-heading">Section Labels</h2>
+  <p class="doc-desc">Small caps gray heading used to divide the floating side panel into named sections (currently <em>Versions</em> and <em>Guests</em>). Class: <code>.section-label</code>.</p>
+  <div class="surface-demo-wrap" style="background:#fff; border:1px solid var(--color-border); border-radius: 14px;">
+    <div>
+      <div class="section-label-sample" style="margin-bottom:8px;">Versions</div>
+      <div class="muted-sample">Version dropdown + New / Duplicate / Rename buttons</div>
+    </div>
+  </div>
+  <p class="doc-desc" style="margin-top:14px; margin-bottom:0;">
+    <code>font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #bbb;</code>
+  </p>
+</section>
+
+<!-- ── Buttons ── -->
+<section class="doc-section">
+  <h2 class="doc-heading">Buttons</h2>
+
+  <div class="demo-row">
+    <span class="demo-label">Default</span>
+    <button>Duplicate</button>
+    <button>Rename</button>
+  </div>
+  <div class="demo-row">
+    <span class="demo-label">Primary</span>
+    <button class="primary">OK</button>
+  </div>
+  <div class="demo-row">
+    <span class="demo-label">Ghost / text</span>
+    <button class="ghost">Ungroup</button>
+  </div>
+  <div class="demo-row">
+    <span class="demo-label">Icon (table-add)</span>
+    <div class="icon-btn-demo">
+      <img src="assets/table-circle-hover.svg" alt="" />
+      <span>Round</span>
+    </div>
+    <span class="muted-sample">rests neutral gray, crossfades to blue-tinted icon on hover — background never changes</span>
+  </div>
+  <div class="demo-row">
+    <span class="demo-label">Icon (section "+")</span>
+    <div class="section-label-row-demo">
+      <span class="section-label-sample">Versions</span>
+      <button class="icon-btn" type="button">+</button>
+    </div>
+    <span class="muted-sample">sits at the far right of a section-label row to add a new item</span>
+  </div>
+  <div class="demo-row">
+    <span class="demo-label">Section row + stat</span>
+    <div class="section-label-row-demo">
+      <span class="section-label-sample">Guests</span>
+      <span class="guest-stat-text-demo">12/128 guests seated</span>
+      <button class="icon-btn" type="button">+</button>
+    </div>
+    <span class="muted-sample">a stat line can sit between the label and the "+" — pushed flush against it</span>
+  </div>
+  <div class="demo-row" style="align-items: flex-start;">
+    <span class="demo-label">Dropdown / menu</span>
+    <div>
+      <button class="primary dropdown-btn-demo" type="button">
+        Export as .csv
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+          <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="dropdown-menu-demo">
+        <button>Group guests by table</button>
+        <button>Sort guests alphabetically</button>
+      </div>
+    </div>
+    <span class="muted-sample">primary button + chevron opens a menu of export variants; click outside or Escape to dismiss</span>
+  </div>
+</section>
+
+<!-- ── Inputs ── -->
+<section class="doc-section">
+  <h2 class="doc-heading">Inputs</h2>
+  <div class="demo-row">
+    <span class="demo-label">Text input</span>
+    <input class="input-demo" placeholder="Search guests…" />
+  </div>
+  <div class="demo-row">
+    <span class="demo-label">Focused</span>
+    <input class="input-demo focused" value="Search guests…" />
+  </div>
+  <p class="doc-desc" style="margin-top:6px; margin-bottom:0;">Focus state: <code>border-color / box-shadow: var(--color-accent)</code>, 2px.</p>
+</section>
+
+<!-- ── List items ── -->
+<section class="doc-section">
+  <h2 class="doc-heading">List Items</h2>
+  <p class="doc-desc">Rows used for lists that need a "which one is current" state plus hover-only secondary actions — currently the Versions list. The active row is marked by a faint accent-tinted background and bold name only (no separate indicator icon — a persistent dot/checkmark read as an unread or update badge, which was misleading here). Double-click the name to rename in place; hover reveals duplicate and delete icons on the right (delete is hidden entirely when it's the only remaining item — you can't delete the last version). The row has a fixed <code>min-height: 32px</code> so the icons appearing on hover never changes the row's height.</p>
+  <div style="max-width: 280px; border: 1px solid var(--color-border); border-radius: 10px; padding: 6px; background: #fff;">
+    <div class="version-item active">
+      <span class="version-name">Main Floor</span>
+      <button class="version-duplicate-btn" style="display:flex;" type="button">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <rect x="5.5" y="5.5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M3.5 10.5V3a1.5 1.5 0 0 1 1.5-1.5h7.5" stroke="currentColor" stroke-width="1.3"/>
+        </svg>
+      </button>
+      <button class="version-delete-btn" style="display:flex;" type="button">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.6 8.4a1 1 0 0 0 1 .93h3.8a1 1 0 0 0 1-.93l.6-8.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="version-item">
+      <span class="version-name">Ceremony Layout</span>
+      <button class="version-duplicate-btn" style="display:flex;" type="button">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <rect x="5.5" y="5.5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M3.5 10.5V3a1.5 1.5 0 0 1 1.5-1.5h7.5" stroke="currentColor" stroke-width="1.3"/>
+        </svg>
+      </button>
+      <button class="version-delete-btn" style="display:flex;" type="button">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.6 8.4a1 1 0 0 0 1 .93h3.8a1 1 0 0 0 1-.93l.6-8.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <p class="doc-desc" style="margin-top:24px;">Guest list grouped by each guest's first tag, using the same small-caps gray label style as section headers (<code>.guest-group-label</code>). Untagged guests are collected into their own group at the end rather than mixed in. Rows are name-only (no avatar) with tight vertical padding to keep more guests visible at once. Each group header shows a <code>seated/total</code> count (same convention as the overall stat) and a chevron that rotates between collapsed (pointing right) and expanded (pointing down) — click the header to toggle.</p>
+  <div style="max-width: 280px; border: 1px solid var(--color-border); border-radius: 10px; padding: 6px; background: #fff;">
+    <div class="guest-group-label">
+      <svg class="group-chevron" width="8" height="8" viewBox="0 0 8 8" fill="none">
+        <path d="M2 1.5L5.5 4L2 6.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="guest-group-name">Family</span>
+      <span class="guest-group-count">1/2 seated</span>
+    </div>
+    <div class="guest-item-demo seated">
+      <span class="guest-name-demo">Emma Henderson</span>
+    </div>
+    <div class="guest-item-demo">
+      <span class="guest-name-demo">Noah Anderson</span>
+    </div>
+    <div class="guest-group-label collapsed">
+      <svg class="group-chevron" width="8" height="8" viewBox="0 0 8 8" fill="none">
+        <path d="M2 1.5L5.5 4L2 6.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="guest-group-name">Friends</span>
+      <span class="guest-group-count">0/1 seated</span>
+    </div>
+    <div class="guest-group-label">
+      <svg class="group-chevron" width="8" height="8" viewBox="0 0 8 8" fill="none">
+        <path d="M2 1.5L5.5 4L2 6.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="guest-group-name">Untagged</span>
+      <span class="guest-group-count">0/1 seated</span>
+    </div>
+    <div class="guest-item-demo">
+      <span class="guest-name-demo">Layla Zimmerman</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── Floating surfaces ── -->
+<section class="doc-section">
+  <h2 class="doc-heading">Panels &amp; Floating Surfaces</h2>
+  <p class="doc-desc">The canvas fills the full window; every UI surface floats on top of it as a white card rather than occupying its own layout track.</p>
+  <div class="surface-demo-wrap">
+    <div>
+      <div class="surface-panel">Side panel<br>14px radius<br>0 4px 20px rgba(0,0,0,.12)</div>
+      <div class="surface-label">Side panel — position: absolute</div>
+    </div>
+    <div>
+      <div class="surface-cluster">Zoom / Export / Table-add</div>
+      <div class="surface-label">Small clusters — 8–10px radius, 0 2px 6px rgba(0,0,0,.08)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Canvas elements ── -->
+<section class="doc-section">
+  <h2 class="doc-heading">Canvas Elements</h2>
+  <p class="doc-desc">Drawn directly on <code>&lt;canvas&gt;</code>, so these colors live in <code>js/drawTable.js</code> / <code>js/canvas.js</code> rather than CSS.</p>
+  <div class="canvas-demo-wrap">
+    <div>
+      <canvas class="mini" id="canvasTable" width="180" height="120"></canvas>
+      <div class="canvas-caption">Unselected / selected table + filled &amp; empty seats</div>
+    </div>
+    <div>
+      <canvas class="mini" id="canvasGroup" width="180" height="120"></canvas>
+      <div class="canvas-caption">Conjoined group — solid gray outline, 2px pad</div>
+    </div>
+  </div>
+</section>
+
+<script>
+function drawSeat(ctx, cx, cy, filled) {
+  ctx.beginPath();
+  ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+  ctx.fillStyle = filled ? '#2563EB' : '#e8e8e8';
+  ctx.fill();
+  ctx.strokeStyle = filled ? '#1D4ED8' : '#bbbbbb';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+function drawTableDemo() {
+  const c = document.getElementById('canvasTable');
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#f7f7f7';
+  ctx.fillRect(0, 0, c.width, c.height);
+
+  // Unselected circle table
+  ctx.beginPath();
+  ctx.arc(45, 60, 24, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.strokeStyle = '#cccccc';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  drawSeat(ctx, 45, 26, true);
+  drawSeat(ctx, 45, 94, false);
+
+  // Selected circle table
+  ctx.beginPath();
+  ctx.arc(135, 60, 24, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.strokeStyle = '#2563EB';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  drawSeat(ctx, 135, 26, false);
+  drawSeat(ctx, 135, 94, true);
+}
+
+function drawGroupDemo() {
+  const c = document.getElementById('canvasGroup');
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#f7f7f7';
+  ctx.fillRect(0, 0, c.width, c.height);
+
+  const x = 20, y = 38, w = 140, h = 44;
+  ctx.beginPath();
+  ctx.roundRect(x - 2, y - 2, w + 4, h + 4, 8);
+  ctx.strokeStyle = '#999999';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.roundRect(x, y, w / 2 - 2, h, 5);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.strokeStyle = '#cccccc';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.roundRect(x + w / 2 + 2, y, w / 2 - 2, h, 5);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.strokeStyle = '#cccccc';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  [x + 16, x + 51, x + 88, x + 123].forEach((sx, i) => drawSeat(ctx, sx, y - 4, i % 2 === 0));
+}
+
+drawTableDemo();
+drawGroupDemo();
+</script>
+</body>
+</html>
