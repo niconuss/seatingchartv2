@@ -49,6 +49,10 @@ export class Store {
   // guests' own `tags`) don't need an entry here, only ones a user explicitly added
   // via "+ Add Group" before anyone was assigned to them.
   get groups() { return this.state.groups ?? []; }
+  // Last-used seats/headSeats per table type, keyed by type — new tables of that
+  // type default to whatever was last set, instead of always resetting to the
+  // hardcoded default.
+  get tableDefaults() { return this.state.tableDefaults ?? {}; }
   get currentVersionId() { return this.state.currentVersionId; }
 
   get currentVersion() {
@@ -158,6 +162,7 @@ function defaultState(chartId) {
     title: 'Untitled Chart',
     guests: [],
     groups: [],
+    tableDefaults: {},
     versions: [v],
     currentVersionId: v.id,
     savedAt: Date.now(),
@@ -166,7 +171,8 @@ function defaultState(chartId) {
 
 // ── Convenience mutation helpers (imported where needed) ──────────────────
 
-export function makeTable(type, x, y) {
+/** overrides (optional): { seats, headSeats } — last-used values for this table type, see Store.tableDefaults. */
+export function makeTable(type, x, y, overrides = {}) {
   const defaults = {
     circle:     { seats: 8,  width: 100, height: 100 },
     rect:       { seats: 8,  width: 180, height: 60  },
@@ -180,11 +186,11 @@ export function makeTable(type, x, y) {
     y,
     rotation: 0,
     name: 'Table Name',
-    seats: d.seats,
+    seats: overrides.seats ?? d.seats,
     width: d.width,
     height: d.height,
     conjoinGroupId: null,
-    headSeats: type === 'rect' ? 0 : undefined, // per-end seat count: 0, 1, or 2
+    headSeats: type === 'rect' ? (overrides.headSeats ?? 0) : undefined, // per-end seat count: 0, 1, or 2
     seatAssignments: {},
   };
 }

@@ -267,8 +267,27 @@ function drawRectTable(ctx, table, guests, selected, endInfo) {
   [ctx.strokeStyle, ctx.lineWidth] = tableStroke(table, selected);
   ctx.stroke();
 
-  drawTableName(ctx, table.name);
+  // A conjoined group's name is drawn separately, in its own pass after every
+  // table is painted (see drawRectGroupName / canvas.js render()) — not here.
+  // Drawing it inline with whichever member happens to "own" it would risk a
+  // later-painted group member's opaque fill covering it right back up, since
+  // the name's world position can land on a different table's territory (e.g.
+  // the middle table of a 3-table group).
   drawSeatsFromPositions(ctx, table, guests, getSeatPositions(table, endInfo));
+}
+
+/**
+ * Draws a rect table's (or conjoined group's) name — called in its own pass after
+ * every table has been painted, so a later-drawn group member's fill can never
+ * paint over it. Must be called with the same translate/rotate transform drawTable
+ * uses for this table (i.e. from within the same per-table ctx.save()/restore()).
+ */
+export function drawRectGroupName(ctx, table, endInfo) {
+  if (!(endInfo?.showName ?? true)) return;
+  ctx.save();
+  ctx.translate(endInfo?.nameOffsetX ?? 0, 0);
+  drawTableName(ctx, table.name);
+  ctx.restore();
 }
 
 // ── Sweetheart table ──────────────────────────────────────────────────────────

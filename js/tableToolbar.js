@@ -80,14 +80,20 @@ export class TableToolbar {
       const t = get(); if (!t || t.seats <= 1) return;
       this.store.mutate(s => {
         const tbl = this._findTable(s, this._id);
-        if (tbl) tbl.seats = Math.max(1, tbl.seats - 1);
+        if (tbl) {
+          tbl.seats = Math.max(1, tbl.seats - 1);
+          this._rememberDefault(s, tbl.type, { seats: tbl.seats });
+        }
       });
       this._sync(); this.canvas.render();
     });
     el.querySelector('.tt-seats-inc').addEventListener('click', () => {
       this.store.mutate(s => {
         const tbl = this._findTable(s, this._id);
-        if (tbl) tbl.seats = Math.min(30, tbl.seats + 1);
+        if (tbl) {
+          tbl.seats = Math.min(30, tbl.seats + 1);
+          this._rememberDefault(s, tbl.type, { seats: tbl.seats });
+        }
       });
       this._sync(); this.canvas.render();
     });
@@ -101,13 +107,15 @@ export class TableToolbar {
       const checked = e.target.checked;
       const table   = this._getTable();
       const gid     = table?.conjoinGroupId;
+      const headSeats = checked ? 1 : 0;
       this.store.mutate(s => {
         const v = s.versions.find(v => v.id === s.currentVersionId);
         v.tables.forEach(t => {
           if (t.id === id || (gid && t.conjoinGroupId === gid)) {
-            t.headSeats = checked ? 1 : 0;
+            t.headSeats = headSeats;
           }
         });
+        this._rememberDefault(s, 'rect', { headSeats });
       });
       this._sync(); this.canvas.render();
     });
@@ -117,13 +125,15 @@ export class TableToolbar {
       const checked = e.target.checked;
       const table   = this._getTable();
       const gid     = table?.conjoinGroupId;
+      const headSeats = checked ? 2 : 1;
       this.store.mutate(s => {
         const v = s.versions.find(v => v.id === s.currentVersionId);
         v.tables.forEach(t => {
           if (t.id === id || (gid && t.conjoinGroupId === gid)) {
-            t.headSeats = checked ? 2 : 1;
+            t.headSeats = headSeats;
           }
         });
+        this._rememberDefault(s, 'rect', { headSeats });
       });
       this._sync(); this.canvas.render();
     });
@@ -244,5 +254,11 @@ export class TableToolbar {
   _findTable(s, id)    {
     const v = s.versions.find(v => v.id === s.currentVersionId);
     return v?.tables.find(t => t.id === id);
+  }
+
+  /** Remembers a seats/headSeats change as the default for the next new table of this type. */
+  _rememberDefault(s, type, patch) {
+    s.tableDefaults = s.tableDefaults ?? {};
+    s.tableDefaults[type] = { ...(s.tableDefaults[type] ?? {}), ...patch };
   }
 }

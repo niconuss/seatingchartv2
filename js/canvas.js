@@ -1,7 +1,7 @@
 // Canvas renderer and interaction handler
 
 import { makeTable } from './store.js';
-import { drawTable, drawGroupHighlight, drawFloatingGuest, drawSeat, getFloatingGuestBounds, buildFloatingGuestDragImage, getRotateHandleWorld, getSeatPositions, SEAT_RADIUS } from './drawTable.js';
+import { drawTable, drawRectGroupName, drawGroupHighlight, drawFloatingGuest, drawSeat, getFloatingGuestBounds, buildFloatingGuestDragImage, getRotateHandleWorld, getSeatPositions, SEAT_RADIUS } from './drawTable.js';
 import { TableToolbar } from './tableToolbar.js';
 
 const GRID_SIZE     = 40;
@@ -155,6 +155,18 @@ export class Canvas {
 
     for (const table of this.store.tables) {
       drawTable(ctx, table, guestsForRender, table.id === this._selected, endInfo[table.id]);
+    }
+
+    // Rect table names are painted in their own pass after every table, so a
+    // later-drawn group member's opaque fill can never cover a merged group's name
+    // (see drawRectGroupName).
+    for (const table of this.store.tables) {
+      if (table.type !== 'rect') continue;
+      ctx.save();
+      ctx.translate(table.x, table.y);
+      ctx.rotate(table.rotation);
+      drawRectGroupName(ctx, table, endInfo[table.id]);
+      ctx.restore();
     }
 
     const floatingGuests = this.store.currentVersion?.floatingGuests ?? {};
@@ -777,6 +789,11 @@ export class Canvas {
           topSeatX, botSeatX,
           topOffset: a.offset,
           botOffset: a.offset + a.topCount,
+          // A conjoined group reads as one table with one name — only its leftmost
+          // member draws it, centered on the whole group (falls out to the table's
+          // own center for a standalone, ungrouped table).
+          showName:    a.isLeft,
+          nameOffsetX: groupMidX - a.table.x,
         };
       }
     }
@@ -882,13 +899,34 @@ export class Canvas {
     const existing = document.getElementById('canvas-inline-edit');
     if (existing) existing.remove();
 
-    const s = this.toScreen(table.x, table.y);
+    // A conjoined group renders as one merged table with a single name, shown on
+    // its leftmost member (see drawRectTable's showName/nameOffsetX). Edit that
+    // member — not whichever one was actually double-clicked — sized and centered
+    // to span the whole merged group, using the exact same offset the renderer
+    // uses so the edit box lines up with where the name is actually drawn.
+    let nameTable  = table;
+    let totalWidth = table.width;
+    let centerX = table.x, centerY = table.y;
+
+    if (table.conjoinGroupId && table.type === 'rect') {
+      const members = this.store.tables.filter(t => t.conjoinGroupId === table.conjoinGroupId);
+      nameTable  = [...members].sort((a, b) => a.x - b.x)[0];
+      totalWidth = members.reduce((sum, m) => sum + m.width, 0);
+
+      const groupInfo = this._computeGroupEndInfo()[nameTable.id];
+      const localX = groupInfo?.nameOffsetX ?? 0;
+      const cos = Math.cos(nameTable.rotation), sin = Math.sin(nameTable.rotation);
+      centerX = nameTable.x + localX * cos;
+      centerY = nameTable.y + localX * sin;
+    }
+
+    const s = this.toScreen(centerX, centerY);
     const input = document.createElement('input');
     input.id    = 'canvas-inline-edit';
     input.type  = 'text';
-    input.value = table.name ?? '';
+    input.value = nameTable.name ?? '';
 
-    const w = Math.max(80, (table.type === 'circle' ? table.width * 0.9 : table.width * 0.72) * this.zoom);
+    const w = Math.max(80, (table.type === 'circle' ? totalWidth * 0.9 : totalWidth * 0.72) * this.zoom);
     input.style.cssText = `
       position: absolute;
       left: ${s.x}px; top: ${s.y}px;
@@ -910,7 +948,7 @@ export class Canvas {
 
     const commit = () => {
       const name = input.value;
-      const id   = table.id;
+      const id   = nameTable.id;
       this.store.mutate(s => {
         const v = s.versions.find(v => v.id === s.currentVersionId);
         const t = v.tables.find(t => t.id === id);
@@ -1012,7 +1050,7 @@ export class Canvas {
     if (!type) return;
     const { x, y } = this._cssPos(e);
     const w     = this.toWorld(x, y);
-    const table = makeTable(type, this.snapToGrid(w.x), this.snapToGrid(w.y));
+    const table = makeTable(type, this.snapToGrid(w.x), this.snapToGrid(w.y), this.store.tableDefaults[type]);
     this.store.mutate(s => {
       const v = s.versions.find(v => v.id === s.currentVersionId);
       v.tables.push(table);
@@ -1284,7 +1322,7 @@ export class Canvas {
 
   addTable(type) {
     const w     = this.toWorld(this.cssWidth / 2, this.cssHeight / 2);
-    const table = makeTable(type, this.snapToGrid(w.x), this.snapToGrid(w.y));
+    const table = makeTable(type, this.snapToGrid(w.x), this.snapToGrid(w.y), this.store.tableDefaults[type]);
     this.store.mutate(s => {
       const v = s.versions.find(v => v.id === s.currentVersionId);
       v.tables.push(table);

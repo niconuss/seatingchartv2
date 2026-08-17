@@ -30,6 +30,8 @@ function standaloneRectEndInfo(table) {
     topSeatX, botSeatX,
     topOffset: offset,
     botOffset: offset + topCount,
+    showName: true,
+    nameOffsetX: 0,
   };
 }
 
