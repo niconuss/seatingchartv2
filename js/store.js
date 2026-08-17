@@ -184,7 +184,7 @@ export function makeTable(type, x, y) {
     width: d.width,
     height: d.height,
     conjoinGroupId: null,
-    headSeats: type === 'rect' ? false : undefined,
+    headSeats: type === 'rect' ? 0 : undefined, // per-end seat count: 0, 1, or 2
     seatAssignments: {},
   };
 }

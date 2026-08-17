@@ -57,6 +57,9 @@ export class TableToolbar {
       <label class="tt-heads-label" style="display:none">
         <input type="checkbox" class="tt-heads-cb" /> Heads
       </label>
+      <label class="tt-heads-label tt-heads-double-label" style="display:none">
+        <input type="checkbox" class="tt-heads-double-cb" /> &times;2
+      </label>
       <div    class="tt-sep tt-sep-ungroup" style="display:none"></div>
       <button class="tt-ungroup"            style="display:none">Ungroup</button>
       <div    class="tt-sep"></div>
@@ -89,7 +92,10 @@ export class TableToolbar {
       this._sync(); this.canvas.render();
     });
 
-    // Head seats checkbox (rect only) — applies to entire group if conjoined
+    // Head seats checkbox (rect only) — applies to entire group if conjoined.
+    // headSeats is a per-end count: 0 (off), 1 (one seat per end), or 2 (two seats
+    // side by side per end). The plain checkbox toggles 0 vs 1; the ×2 checkbox
+    // (only shown once heads are on) toggles between 1 and 2.
     el.querySelector('.tt-heads-cb').addEventListener('change', e => {
       const id      = this._id;
       const checked = e.target.checked;
@@ -99,11 +105,27 @@ export class TableToolbar {
         const v = s.versions.find(v => v.id === s.currentVersionId);
         v.tables.forEach(t => {
           if (t.id === id || (gid && t.conjoinGroupId === gid)) {
-            t.headSeats = checked;
+            t.headSeats = checked ? 1 : 0;
           }
         });
       });
-      this.canvas.render();
+      this._sync(); this.canvas.render();
+    });
+
+    el.querySelector('.tt-heads-double-cb').addEventListener('change', e => {
+      const id      = this._id;
+      const checked = e.target.checked;
+      const table   = this._getTable();
+      const gid     = table?.conjoinGroupId;
+      this.store.mutate(s => {
+        const v = s.versions.find(v => v.id === s.currentVersionId);
+        v.tables.forEach(t => {
+          if (t.id === id || (gid && t.conjoinGroupId === gid)) {
+            t.headSeats = checked ? 2 : 1;
+          }
+        });
+      });
+      this._sync(); this.canvas.render();
     });
 
     // Ungroup
@@ -148,7 +170,12 @@ export class TableToolbar {
     this._el.querySelector('.tt-heads-label').style.display   = showHeads;
     this._el.querySelector('.tt-sep-heads').style.display     = showHeads;
     if (isRect) {
-      this._el.querySelector('.tt-heads-cb').checked = !!table.headSeats;
+      const headCount = table.headSeats || 0;
+      this._el.querySelector('.tt-heads-cb').checked = headCount > 0;
+      this._el.querySelector('.tt-heads-double-label').style.display = headCount > 0 ? '' : 'none';
+      this._el.querySelector('.tt-heads-double-cb').checked = headCount === 2;
+    } else {
+      this._el.querySelector('.tt-heads-double-label').style.display = 'none';
     }
 
     this._el.querySelector('.tt-ungroup').style.display       = isConjoined ? '' : 'none';
@@ -201,12 +228,13 @@ export class TableToolbar {
     if (members.length < 2) return count;
 
     // Groups are always horizontal short-end chains — only the group's two end
-    // tables can show a head seat; interior tables lose both.
-    const sorted  = [...members].sort((a, b) => a.x - b.x);
-    const isLeft  = sorted[0].id === table.id;
-    const isRight = sorted[sorted.length - 1].id === table.id;
-    if (!isLeft)  count--;
-    if (!isRight) count--;
+    // tables can show head seats; interior tables lose both ends' worth.
+    const sorted    = [...members].sort((a, b) => a.x - b.x);
+    const isLeft    = sorted[0].id === table.id;
+    const isRight   = sorted[sorted.length - 1].id === table.id;
+    const headCount = Math.min(2, table.headSeats);
+    if (!isLeft)  count -= headCount;
+    if (!isRight) count -= headCount;
 
     return Math.max(0, count);
   }

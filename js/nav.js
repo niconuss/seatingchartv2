@@ -11,9 +11,9 @@ const PREVIEW_SIZE = 80; // css px — square drag-preview canvas
  * actually in the store yet, so that computation isn't reachable directly.
  */
 function standaloneRectEndInfo(table) {
-  const headSeats  = !!table.headSeats;
-  const sideCount  = headSeats ? Math.max(0, table.seats - 2) : table.seats;
-  const offset     = headSeats ? 2 : 0;
+  const headCount  = Math.min(2, table.headSeats || 0); // per-end count: 0, 1, or 2
+  const sideCount  = headCount ? Math.max(0, table.seats - headCount * 2) : table.seats;
+  const offset     = headCount * 2;
   const topCount   = Math.ceil(sideCount / 2);
   const botCount   = Math.floor(sideCount / 2);
 
@@ -25,8 +25,8 @@ function standaloneRectEndInfo(table) {
   const botSeatX = Array.from({ length: botCount }, (_, i) => (botCount === 1 ? 0 : rowStartX + i * botSpacing));
 
   return {
-    showLeftHead:  headSeats,
-    showRightHead: headSeats,
+    showLeftHead:  headCount > 0,
+    showRightHead: headCount > 0,
     topSeatX, botSeatX,
     topOffset: offset,
     botOffset: offset + topCount,

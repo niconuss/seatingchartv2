@@ -731,7 +731,7 @@ export class Canvas {
 
     for (const members of Object.values(groups)) {
       const sorted    = [...members].sort((a, b) => a.x - b.x);
-      const headSeats = !!sorted[0].headSeats; // uniform across a group
+      const headCount = Math.min(2, sorted[0].headSeats || 0); // per-end count, uniform across a group
 
       const groupLeft  = Math.min(...sorted.map(m => m.x - m.width / 2));
       const groupRight = Math.max(...sorted.map(m => m.x + m.width / 2));
@@ -740,9 +740,9 @@ export class Canvas {
       const alloc = sorted.map((m, i) => {
         const isLeft  = i === 0;
         const isRight = i === sorted.length - 1;
-        if (headSeats) {
-          const sideCount = Math.max(0, m.seats - 2);
-          return { table: m, isLeft, isRight, offset: 2,
+        if (headCount) {
+          const sideCount = Math.max(0, m.seats - headCount * 2);
+          return { table: m, isLeft, isRight, offset: headCount * 2,
                     topCount: Math.ceil(sideCount / 2), botCount: Math.floor(sideCount / 2) };
         }
         return { table: m, isLeft, isRight, offset: 0,
@@ -772,8 +772,8 @@ export class Canvas {
         }
 
         endInfo[a.table.id] = {
-          showLeftHead:  headSeats && a.isLeft,
-          showRightHead: headSeats && a.isRight,
+          showLeftHead:  headCount > 0 && a.isLeft,
+          showRightHead: headCount > 0 && a.isRight,
           topSeatX, botSeatX,
           topOffset: a.offset,
           botOffset: a.offset + a.topCount,
@@ -859,7 +859,7 @@ export class Canvas {
             (otherGrp && t.conjoinGroupId === otherGrp)) {
           t.conjoinGroupId = groupId;
           // Clear head seats on merge — user can re-enable once grouped
-          if (t.headSeats) t.headSeats = false;
+          if (t.headSeats) t.headSeats = 0;
         }
       });
     });

@@ -186,9 +186,18 @@ export function getSeatPositions(table, endInfo) {
   const positions = [];
 
   if (table.headSeats) {
-    const side = hw + SEAT_RADIUS + 4;
-    if (endInfo?.showLeftHead  ?? true) positions.push({ seatIndex: 0, x: -side, y: 0, angle: Math.PI });
-    if (endInfo?.showRightHead ?? true) positions.push({ seatIndex: 1, x:  side, y: 0, angle: 0 });
+    // headSeats is a per-end count (1 or 2) — 2 seats at an end sit side by side
+    // along the table's short axis rather than stacked outward.
+    const side  = hw + SEAT_RADIUS + 4;
+    const count = Math.min(2, table.headSeats);
+    const yOffsets = count === 2 ? [-(SEAT_RADIUS + 3), SEAT_RADIUS + 3] : [0];
+
+    if (endInfo?.showLeftHead ?? true) {
+      yOffsets.forEach((y, i) => positions.push({ seatIndex: i, x: -side, y, angle: Math.PI }));
+    }
+    if (endInfo?.showRightHead ?? true) {
+      yOffsets.forEach((y, i) => positions.push({ seatIndex: count + i, x: side, y, angle: 0 }));
+    }
   }
 
   const topY = -(hh + SEAT_RADIUS + 4);
